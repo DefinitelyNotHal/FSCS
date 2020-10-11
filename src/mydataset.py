@@ -7,19 +7,12 @@ import numpy as np
 class MyDataset(Dataset):
     def __init__(self, csv_path, num_primary_color, mode=None):
         self.csv_path = csv_path
-        print(csv_path)#places.csv
-        print(num_primary_color)
         if mode == 'train':
-            print('training mode is on')
-            self.imgs_path = np.array(pd.read_csv(csv_path, header=None)).reshape(-1)[:]#.reshape(-1)[:-10] #csvリストの後ろをvaldataに
-            self.palette_list = np.array(pd.read_csv('palette_%d_%s' % (num_primary_color, csv_path), header=None)).reshape(-1, num_primary_color*3)[:]#[:-10]
-            print(np.array(pd.read_csv(csv_path, header=None)))#retrive the last 10
-            print(np.array(np.array(pd.read_csv('palette_%d_%s' % (num_primary_color, csv_path), header=None))))
-            print(self.imgs_path)#../img.jpg
-            print(self.palette_list)
+            self.imgs_path = np.array(pd.read_csv(csv_path, header=None)).reshape(-1)[:-10] #csvリストの後ろをvaldataに
+            self.palette_list = np.array(pd.read_csv('palette_%d_%s' % (num_primary_color, csv_path), header=None)).reshape(-1, num_primary_color*3)[:-10]
         if mode == 'val':
-            self.imgs_path = np.array(pd.read_csv(csv_path, header=None)).reshape(-1)[:]#[-10:]
-            self.palette_list = np.array(pd.read_csv('palette_%d_%s' % (num_primary_color, csv_path), header=None)).reshape(-1, num_primary_color*3)[:]#[-10:]
+            self.imgs_path = np.array(pd.read_csv(csv_path, header=None)).reshape(-1)[-10:]
+            self.palette_list = np.array(pd.read_csv('palette_%d_%s' % (num_primary_color, csv_path), header=None)).reshape(-1, num_primary_color*3)[-10:]
         if mode == 'test':
             self.imgs_path = np.array(pd.read_csv(csv_path, header=None)).reshape(-1)
             self.palette_list = np.array(pd.read_csv('palette_%d_%s' % (num_primary_color, csv_path), header=None)).reshape(-1, num_primary_color*3)
