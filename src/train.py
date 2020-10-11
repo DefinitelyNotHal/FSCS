@@ -15,9 +15,9 @@ import os
 
 parser = argparse.ArgumentParser(description='baseline')
 parser.add_argument('--run_name', type=str, default='debug', help='run-name. This name is used for output folder.')
-parser.add_argument('--batch_size', type=int, default=32, metavar='N',
+parser.add_argument('--batch_size', type=int, default=1, metavar='N',#32
                     help='input batch size for training (default: 32)')
-parser.add_argument('--epochs', type=int, default=10, metavar='N',
+parser.add_argument('--epochs', type=int, default=50, metavar='N',#10
                     help='number of epochs to train (default: 10)')
 parser.add_argument('--no_cuda', action='store_true', default=False,
                     help='enables CUDA training')
@@ -39,7 +39,7 @@ parser.add_argument('--save_layer_train', type=int, default=1,
                     help='save_layer_train')
 
 
-parser.add_argument('--num_workers', type=int, default=8,
+parser.add_argument('--num_workers', type=int, default=0,#8
                     help='num_workers of dataloader')
 parser.add_argument('--csv_path', type=str, default='places.csv', help='path to csv of images path')
 
@@ -64,7 +64,9 @@ cudnn.benchmark = True
 
 device = torch.device("cuda" if args.cuda else "cpu")
 
+print(args.csv_path)
 train_dataset = MyDataset(args.csv_path, args.num_primary_color, mode='train')
+print('len train dataset: ',(train_dataset))
 train_loader = torch.utils.data.DataLoader(
     train_dataset,
     batch_size=args.batch_size,
@@ -151,6 +153,7 @@ def alpha_normalize(alpha_layers):
 
 def read_backimage():
     img = cv2.imread('backimage.jpg')
+    # print(img.shape)#256,256,3
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     img = img.transpose((2,0,1))
     img = img/255
@@ -168,14 +171,19 @@ def mono_color_reconst_loss(mono_color_reconst_img, target_img):
 
 
 def train(epoch):
-    mask_generator.train()
+    mask_generator.train()#alpha predictor
     residue_predictor.train()
-
+    print('epoch#',epoch)
+    print('#batches',len(train_loader))
 
     train_loss = 0
     for batch_idx, (target_img, primary_color_layers) in enumerate(train_loader):
+        print('batch idx',batch_idx)
         target_img = target_img.to(device) # bn, 3ch, h, w
+        print(target_img.shape)
+        print(target_img.type)
         primary_color_layers = primary_color_layers.to(device)
+
         #primary_color_layers = primary_color_layers.to(device) # bn, num_primary_color, 3ch, h, w
 
         optimizer.zero_grad()
@@ -222,6 +230,10 @@ def train(epoch):
         #print('total_loss: ', total_loss)
         d_loss = squared_mahalanobis_distance_loss(primary_color_layers.detach(), processed_alpha_layers, pred_unmixed_rgb_layers) * args.distance_loss_lambda
 
+        print('r',r_loss)
+        print('m',m_loss)
+        print('s',s_loss)
+        print('d',d_loss)
         total_loss = r_loss + m_loss + s_loss + d_loss
         total_loss.backward()
         train_loss += total_loss.item()
